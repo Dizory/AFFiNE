@@ -1,0 +1,114 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "AFFiNE",
+  "version": "0.22.4",
+  "identifier": "pro.affine.app",
+  "build": {
+    "beforeDevCommand": "yarn dev",
+    "devUrl": "http://localhost:8080",
+    "beforeBuildCommand": "yarn affine @affine/core build",
+    "frontendDist": "../../../core/dist"
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "../icons/icon.png",
+      "../icons/icon.icns",
+      "../icons/icon.ico"
+    ],
+    "category": "Productivity",
+    "copyright": "Copyright (c) toeverything",
+    "longDescription": "A privacy-focused, local-first, open-source, and ready-to-use alternative for Notion & Miro",
+    "shortDescription": "AFFiNE - Write, Draw and Plan All at Once",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": "",
+      "wix": {
+        "language": ["en-US"],
+        "template": null
+      },
+      "nsis": {
+        "installerIcon": "icons/icon.ico",
+        "license": null,
+        "languages": ["English"]
+      }
+    },
+    "macOS": {
+      "frameworks": [],
+      "minimumSystemVersion": "10.15",
+      "exceptionDomain": "",
+      "signingIdentity": null,
+      "entitlements": null,
+      "hardenedRuntime": true
+    },
+    "linux": {
+      "deb": {
+        "depends": []
+      },
+      "appimage": {
+        "bundleMediaFramework": true
+      }
+    },
+    "resources": [],
+    "externalBin": []
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "AFFiNE",
+        "width": 1000,
+        "height": 800,
+        "minWidth": 640,
+        "minHeight": 480,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": true,
+        "transparent": false,
+        "hiddenTitle": false,
+        "titleBarStyle": "Overlay",
+        "center": true,
+        "fileDropEnabled": true,
+        "url": "index.html"
+      }
+    ],
+    "security": {
+      "csp": null,
+      "devCsp": null,
+      "freezePrototype": false,
+      "dangerousDisableAssetCspModification": false
+    },
+    "withGlobalTauri": true,
+    "macOSPrivateApi": true
+  },
+  "plugins": {
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://affine.pro/api/worker/updates/{{target}}/{{arch}}/{{current_version}}"
+      ],
+      "dialog": true,
+      "pubkey": ""
+    },
+    "deep-link": {
+      "schemes": ["affine", "affine-canary", "affine-beta", "affine-internal", "affine-dev"]
+    },
+    "window-state": {
+      "defaultWidth": 1000,
+      "defaultHeight": 800
+    },
+    "fs": {
+      "scope": [
+        "$APPDATA/**",
+        "$APPCONFIG/**",
+        "$APPLOCALDATA/**",
+        "$APPLOG/**"
+      ]
+    },
+    "shell": {
+      "open": true,
+      "scope": []
+    }
+  }
+}

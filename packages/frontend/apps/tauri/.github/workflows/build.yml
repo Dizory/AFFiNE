@@ -1,0 +1,120 @@
+name: Build Tauri App
+
+on:
+  push:
+    branches:
+      - master
+      - canary
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - master
+      - canary
+
+env:
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: short
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            arch: x86_64
+          - os: ubuntu-22.04
+            target: aarch64-unknown-linux-gnu
+            arch: aarch64
+          - os: macos-14
+            target: aarch64-apple-darwin
+            arch: aarch64
+          - os: macos-13
+            target: x86_64-apple-darwin
+            arch: x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            arch: x86_64
+
+    runs-on: ${{ matrix.platform.os }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform.target }}
+
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: './packages/frontend/apps/tauri/src-tauri -> target'
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies (Linux)
+        if: matrix.platform.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.0-dev \
+            build-essential \
+            curl \
+            wget \
+            libssl-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - name: Install frontend dependencies
+        run: yarn install
+
+      - name: Build frontend
+        run: yarn affine @affine/core build
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_PRIVATE_KEY: ${{ secrets.TAURI_PRIVATE_KEY }}
+          TAURI_KEY_PASSWORD: ${{ secrets.TAURI_KEY_PASSWORD }}
+        with:
+          projectPath: packages/frontend/apps/tauri
+          tauriScript: yarn tauri
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: affine-tauri-${{ matrix.platform.target }}
+          path: |
+            packages/frontend/apps/tauri/src-tauri/target/release/bundle/
+          retention-days: 7
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            affine-tauri-*/**/*
+          draft: true
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
